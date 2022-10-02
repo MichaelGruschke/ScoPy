@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from typing import List, Set, Tuple
+from dataclasses import dataclass, field
 import random
+
 
 SUITS = ("clubs", "spades", "hearts", "diamonds")
 FACES = ("A", "2", "3", "4", "5", "6", "7", "J", "Q", "K")
@@ -11,22 +13,19 @@ PVALUES = (16, 12, 13, 14, 15, 18, 21, 10, 10, 10)
 class Card:
     suit: str
     face: str
-    value: int
-    pvalue: int
+    value: int = field(init=False)
+    pvalue: int = field(init=False)
+
+    def __post_init__(self):
+        val_mapping = {k: v for k, v in zip(FACES, VALUES)}
+        pval_mapping = {k: v for k, v in zip(FACES, PVALUES)}
+        self.value = val_mapping[self.face]
+        self.pvalue = pval_mapping[self.face]
 
 
 class Deck:
-    SUITS = ("clubs", "spades", "hearts", "diamonds")
-    FACES = ("A", "2", "3", "4", "5", "6", "7", "J", "Q", "K")
-    VALUES = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-    PVALUES = (16, 12, 13, 14, 15, 18, 21, 10, 10, 10)
-
     def __init__(self) -> None:
-        self.cards = [
-            Card(suit, *args)
-            for suit in SUITS
-            for args in zip(FACES, VALUES, PVALUES)
-        ]
+        self.cards = [Card(suit, face) for suit in SUITS for face in FACES]
 
     def shuffle(self) -> None:
         random.shuffle(self.cards)
@@ -36,13 +35,30 @@ class Deck:
 
 
 class Player:
-    def __init__(self) -> None:
-        self.hand = []
+    def __init__(self, hand: List[Card] = None) -> None:
+        self.hand = hand or []
+        self.playable_hand = []
 
     def draw(self, card: Card) -> None:
         if len(self.hand) >= 3:
             raise ScoPyHandFullException("Cannot draw more than 3 cards!")
         self.hand.append(card)
+
+    def filter_playable_hand(self, possible_values: Set[int]):
+        self.playable_hand = [
+            card for card in self.hand if card.value in possible_values
+        ]
+
+
+class Table:
+    def __init__(self, cards: Set[Card]) -> None:
+        self.cards = cards
+
+    def get_possible_values() -> Set[int]:
+        pass
+
+    def get_possible_moves() -> Tuple[int, List[int]]:
+        pass
 
 
 class Game:
